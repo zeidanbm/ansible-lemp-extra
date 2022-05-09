@@ -1,0 +1,8 @@
+export ADMIN_EMAIL={{ user.admin.email }}
+export NPM_PACKAGES="${HOME}/.npm-packages"
+export NODE_PATH="$NPM_PACKAGES/lib/node_modules:$NODE_PATH"
+export PATH="$NPM_PACKAGES/bin:$PATH"
+export DATABASE_PORT=3306
+export DATABASE_NAME=wordpress_db
+export DATABASE_USERNAME={{ mysql.wordpress_db_user }}
+export DATABASE_PASSWORD="{{ mysql.wordpress_db_password }}"

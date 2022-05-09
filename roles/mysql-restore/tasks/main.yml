@@ -1,0 +1,51 @@
+---
+  - name: Check if last database is already imported
+    become: yes
+    community.mysql.mysql_query:
+      query: SELECT COUNT(DISTINCT `TABLE_NAME`) AS anyAliasName FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `table_schema` = %(db_name)s
+      named_args:
+        db_name: "{{ mysql.wordpress_db }}"
+      login_user: root
+      login_password: "{{ mysql.root_password }}"
+    register: is_imported
+
+  # - name: Display all variables/facts known for a host
+  #   ansible.builtin.debug:
+  #     msg: "{{ is_imported.query_result[0][0].anyAliasName }}"
+
+  - name: Copy databases and import
+    block:
+      - name: mysql | Create Databases
+        community.mysql.mysql_db:
+          login_unix_socket: /var/run/mysqld/mysqld.sock
+          name:
+            - "{{ mysql.wordpress_db }}"
+          encoding: utf8mb4
+          collation: utf8mb4_unicode_ci
+          state: present
+          login_user: root
+          login_password: "{{ mysql.root_password }}"
+      - name: Copy database files
+        copy:
+          src: files/
+          dest: /tmp
+      - name: Restore databases
+        community.mysql.mysql_db:
+          name: "{{ item.name }}"
+          state: import
+          target: "/tmp/{{ item.file }}"
+          login_user: root
+          login_password: "{{ mysql.root_password }}"
+        with_items:
+          - name: "{{ mysql.wordpress_db }}"
+            file: wordpress_db.sql
+    when: is_imported.query_result[0][0].anyAliasName == 0
+    become: yes
+    always:
+      - name: Clean tmp directory
+        become: yes
+        file: 
+          name: "/tmp/{{ item }}"
+          state: absent
+        with_items:
+          - wordpress_db.sql

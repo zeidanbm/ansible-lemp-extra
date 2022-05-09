@@ -1,0 +1,63 @@
+server {
+    ## Enable ModSecurity
+    modsecurity on;
+    modsecurity_rules_file /etc/nginx/modsec/main.conf;
+    client_max_body_size 25M;
+        
+    server_name www{{ wordpress.domain }} {{ wordpress.domain }};
+    root /var/www/wordpress-site;
+    index index.php index.html;
+    
+    location / {
+        modsecurity_rules '
+            SecRequestBodyLimit 20000000
+            SecAction "id:900130,phase:1,nolog,pass,t:none,setvar:tx.crs_exclusions_wordpress=1"
+        ';
+
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+    }
+    
+    location ~ /\. {
+        deny all;
+    }
+
+    location ~* /(?:uploads|files)/.*\.php$ {
+        deny all;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+            
+        fastcgi_intercept_errors on;
+        fastcgi_pass unix:/var/run/php/php7.4-fpm-wordpress.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    include /etc/nginx/snippets/basic.conf;
+
+    error_log /var/log/nginx/wordpress-site.error.log;
+    access_log /var/log/nginx/wordpress-site.access.log;
+}
+server {
+    if ($host = www.{{ wordpress.domain }}) {
+        return 301 https://$host$request_uri;
+    }
+
+
+    if ($host = {{ wordpress.domain }}) {
+        return 301 https://$host$request_uri;
+    }
+
+
+    listen 80;
+    listen [::]:80;
+        
+    server_name www.{{ wordpress.domain }} {{ wordpress.domain }};
+    return 404;
+}
+

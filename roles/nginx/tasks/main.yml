@@ -1,0 +1,123 @@
+---
+  - name: Install Prerequisites
+    become: yes
+    apt:
+      name: [ apt-utils, autoconf, automake, build-essential, git, libcurl4-openssl-dev, libgeoip-dev, liblmdb-dev, libpcre++-dev, libtool, libxml2-dev, libyajl-dev, pkgconf, wget, zlib1g-dev ]
+
+  - name: Install Nginx
+    become: yes
+    apt:
+      name: nginx
+      state: present
+      force: yes
+      update_cache: yes
+
+  - include: modescurity.yml
+
+  - include: htpasswd.yml
+
+  - name: Copy nginx snippets
+    become: yes
+    copy:
+      src: snippets/
+      dest: /etc/nginx/snippets
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Add nginx.conf
+    become: yes
+    copy:
+      src: nginx.conf
+      dest: /etc/nginx/nginx.conf
+      owner: root
+      group: root
+      mode: 0644
+    notify: (Handler - NGINX Config) Run NGINX
+
+  - name: Disable Default Config
+    become: yes
+    file:
+      dest: /etc/nginx/sites-enabled/default
+      state: absent
+    notify: (Handler - NGINX Config) Run NGINX
+
+  - name: Remove Default Config
+    become: yes
+    file:
+      dest: /etc/nginx/sites-available/default
+      state: absent
+    notify: (Handler - NGINX Config) Run NGINX
+
+  - name: Copy template phpmyadmin site
+    become: yes
+    template:
+      src: phpmyadmin.j2
+      dest: /etc/nginx/sites-available/phpmyadmin
+      owner: root
+      group: root
+      mode: 0644
+    notify: (Handler - NGINX Config) Run NGINX
+
+  - name: Copy template for wordpress site
+    become: yes
+    template:
+      src: wordpress-site.j2
+      dest: /etc/nginx/sites-available/wordpress-site
+      owner: root
+      group: root
+      mode: 0644
+    notify: (Handler - NGINX Config) Run NGINX
+
+  - name: Symlink phpmyadmin Site Config
+    become: yes
+    file:
+      src: /etc/nginx/sites-available/phpmyadmin
+      dest: /etc/nginx/sites-enabled/phpmyadmin
+      state: link
+    notify: (Handler - NGINX Config) Run NGINX
+  
+  - name: Symlink wordpress Site Config
+    become: yes
+    file:
+      src: /etc/nginx/sites-available/wordpress-site
+      dest: /etc/nginx/sites-enabled/wordpress-site
+      state: link
+    notify: (Handler - NGINX Config) Run NGINX
+
+  - name: Set Nginx PID
+    become: yes
+    lineinfile:
+      dest: /etc/nginx/nginx.conf
+      regexp: "^pid"
+      line: "pid /run/nginx.pid;"
+      state: present
+    notify: (Handler - NGINX Config) Run NGINX
+
+  - name: set logrotate to 5 days retention
+    become: yes
+    lineinfile:
+      path: /etc/logrotate.d/nginx
+      regexp: rotate
+      line: rotate 5
+      state: present
+    notify: (Handler - NGINX Config) Run NGINX
+
+  - name: set logrotate to 500M size
+    become: yes
+    lineinfile:
+      path: /etc/logrotate.d/nginx
+      insertafter: rotate
+      firstmatch: true
+      line: size 500M
+      state: present
+    notify: (Handler - NGINX Config) Run NGINX
+  
+  - name: remove www/html folder
+    become: yes
+    file:
+      path: /var/www/html
+      state: absent
+
+  - name: Ensure NGINX is running
+    meta: flush_handlers

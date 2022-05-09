@@ -1,0 +1,16 @@
+---
+postfix_config_file: /etc/postfix/main.cf
+
+postfix_service_state: started
+postfix_service_enabled: true
+
+postfix_inet_interfaces: loopback-only
+postfix_inet_protocols: all
+
+postfix_relayhost: "[smtp.gmail.com]:587"
+
+postfix_smtp_use_tls: "yes"
+postfix_smtp_sasl_auth_enable: "yes"
+postfix_smtp_sasl_security_options: noanonymous
+postfix_smtp_sasl_password_maps: hash:/etc/postfix/sasl_passwd
+postfix_smtp_tls_CApath: /etc/ssl/certs/ca-certificates.crt

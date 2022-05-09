@@ -1,0 +1,20 @@
+---
+  - name: copy iptables script
+    become: yes
+    copy:
+      src: iptables.sh
+      dest: /usr/local/sbin
+      mode: +x
+      owner: root
+      group: root
+
+  - name: Execute the iptables script
+    become: yes
+    command: /bin/bash /usr/local/sbin/iptables.sh
+
+  - name: Persist iptables
+    become: yes
+    apt:
+      name: iptables-persistent
+      state: present
+      update_cache: yes

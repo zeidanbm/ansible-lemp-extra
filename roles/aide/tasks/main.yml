@@ -1,0 +1,40 @@
+---
+  - name: Install aide
+    become: yes
+    apt:
+      name: aide
+      state: present
+      update_cache: yes
+
+  - name: Template aide.conf
+    become: yes
+    template:
+      src: aide.conf.j2
+      dest: "{{ user.admin.home }}/aide/aide.conf"
+      owner: root
+      group: root
+      mode: 0600
+
+  - name: Template default aide
+    become: yes
+    template:
+      src: aide.j2
+      dest: /etc/default/aide
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Update the database
+    become: yes
+    raw: aide -c "{{ user.admin.home }}/aide/aide.conf" --update
+
+  - name: Copy the newly generated aide database
+    become: yes
+    copy:
+      remote_src: yes
+      src: /var/lib/aide/aide.db.new
+      dest: /var/lib/aide/aide.db
+      mode: '0600'
+      owner: root
+      group: root
+  

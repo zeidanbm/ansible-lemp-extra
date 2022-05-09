@@ -1,0 +1,10 @@
+---
+  - hosts: web
+    remote_user: ubuntu
+    gather_facts: false
+    vars_files:
+      - vars/all.yml
+    roles:
+      - common
+      - user
+      - ssh

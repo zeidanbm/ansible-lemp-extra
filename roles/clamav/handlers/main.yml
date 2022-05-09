@@ -1,0 +1,12 @@
+---
+  - name: restart clamav-freshclam
+    become: yes
+    service:
+      name: clamav-freshclam
+      state: restarted
+
+  - name: stop clamav-daemon
+    become: yes
+    service:
+      name: clamav-daemon
+      state: stopped

@@ -1,0 +1,62 @@
+---
+- name: Ensure postfix is installed.
+  become: yes
+  package:
+    name: postfix
+    state: present
+
+- name: Update Postfix configuration.
+  become: yes
+  lineinfile:
+    dest: "{{ postfix_config_file }}"
+    line: "{{ item.name }} = {{ item.value }}"
+    regexp: "^{{ item.name }}?(\\s)="
+    mode: 0644
+  with_items:
+    - name: inet_interfaces
+      value: "{{ postfix_inet_interfaces }}"
+    - name: inet_protocols
+      value: "{{ postfix_inet_protocols }}"
+    - name: relayhost
+      value: "{{ postfix_relayhost }}"
+    - name: smtp_use_tls
+      value: "{{ postfix_smtp_use_tls }}"
+    - name: smtp_tls_CApath
+      value: "{{ postfix_smtp_tls_CApath }}"
+  notify: restart postfix
+
+- name: Update Postfix configuration.
+  become: yes
+  lineinfile:
+    dest: "{{ postfix_config_file }}"
+    line: "{{ item.name }} = {{ item.value }}"
+    insertafter: EOF
+    mode: 0644
+  with_items:
+    - name: smtp_sasl_auth_enable
+      value: "{{ postfix_smtp_sasl_auth_enable }}"
+    - name: smtp_sasl_security_options
+      value: "{{ postfix_smtp_sasl_security_options }}"
+    - name: smtp_sasl_password_maps
+      value: "{{ postfix_smtp_sasl_password_maps }}"
+  notify: restart postfix
+
+- name: configuring postfix sasl creds
+  become: yes
+  copy:
+    content: "[smtp.gmail.com]:587 {{ user.admin.gmail }}:{{ user.admin.gmail_password }}"
+    dest: /etc/postfix/sasl_passwd
+    owner: root
+    group: postfix
+    mode: 0640
+
+- name: generate postfix lookup table
+  become: yes
+  command: postmap /etc/postfix/sasl_passwd
+
+- name: Ensure postfix is started and enabled at boot.
+  become: yes
+  service:
+    name: postfix
+    state: "{{ postfix_service_state }}"
+    enabled: "{{ postfix_service_enabled }}"

@@ -1,0 +1,4 @@
+---
+# Start NGINX service.
+# Default is true.
+nginx_config_start: true

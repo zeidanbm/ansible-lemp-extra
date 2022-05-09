@@ -1,0 +1,37 @@
+---
+  - name: Install Clamav
+    become: yes
+    apt:
+        name: [ clamav, clamav-daemon, mailutils ]
+        state: present
+
+  - name: Stop Clamav-freshclam
+    become: yes
+    service:
+      name: clamav-freshclam
+      state: stopped
+
+  - name: Update ClamAV
+    become: yes
+    command: freshclam
+
+  - name: Copy clamav scan script
+    become: yes
+    copy:
+      src: clamscan_daily.sh
+      dest: /usr/local/sbin
+      mode: +x
+      owner: root
+      group: root
+
+  - name: Ensure we have quarintine directory
+    become: yes
+    file:
+      path: "{{ user.admin.home }}/quarintine"
+      state: directory
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Ensure clamav-freshclam is running and clamav-daemon is stopped
+    meta: flush_handlers

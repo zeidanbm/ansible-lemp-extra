@@ -1,0 +1,16 @@
+# Path for creating the databases
+database_in=file:/var/lib/aide/aide.db
+database_out=file:/var/lib/aide/aide.db.new
+database_new=file:/var/lib/aide/aide.db.new
+
+# checksum
+Checksums = sha256
+
+# Set your own AIDE rule
+MYRULE=u+g+p+n+s+m+xattrs+md5+sha256
+
+# Directories/files to be monitored
+{{ user.admin.home }} MYRULE
+{{ user.dev.home }} MYRULE
+/root MYRULE
+!/var/www/www/wordpress-site/wp-content/uploads/.*

@@ -1,0 +1,117 @@
+---
+  - name: Configure fail2ban to use postfix
+    become: yes
+    copy:
+      remote_src: yes
+      src: /etc/fail2ban/action.d/sendmail-buffered.conf
+      dest: /etc/fail2ban/action.d/postfix-buffered.conf
+      mode: '0644'
+      owner: root
+      group: root
+    
+  - name: Configure fail2ban to use postfix
+    become: yes
+    copy:
+      remote_src: yes
+      src: /etc/fail2ban/action.d/sendmail-common.conf
+      dest: /etc/fail2ban/action.d/postfix-common.conf
+      mode: '0644'
+      owner: root
+      group: root
+    
+  - name: Configure fail2ban to use postfix
+    become: yes
+    copy:
+      remote_src: yes
+      src: /etc/fail2ban/action.d/sendmail-geoip-lines.conf
+      dest: /etc/fail2ban/action.d/postfix-geoip-lines.conf
+      mode: '0644'
+      owner: root
+      group: root
+
+  - name: Configure fail2ban to use postfix
+    become: yes
+    copy:
+      remote_src: yes
+      src: /etc/fail2ban/action.d/sendmail-whois-ipjailmatches.conf
+      dest: /etc/fail2ban/action.d/postfix-whois-ipjailmatches.conf
+      mode: '0644'
+      owner: root
+      group: root
+
+  - name: Configure fail2ban to use postfix
+    become: yes
+    copy:
+      remote_src: yes
+      src: /etc/fail2ban/action.d/sendmail-whois-ipmatches.conf
+      dest: /etc/fail2ban/action.d/postfix-whois-ipmatches.conf
+      mode: '0644'
+      owner: root
+      group: root
+
+  - name: Configure fail2ban to use postfix
+    become: yes
+    copy:
+      remote_src: yes
+      src: /etc/fail2ban/action.d/sendmail-whois-lines.conf
+      dest: /etc/fail2ban/action.d/postfix-whois-lines.conf
+      mode: '0644'
+      owner: root
+      group: root
+
+  - name: Configure fail2ban to use postfix
+    become: yes
+    copy:
+      remote_src: yes
+      src: /etc/fail2ban/action.d/sendmail-whois-matches.conf
+      dest: /etc/fail2ban/action.d/postfix-whois-matches.conf
+      mode: '0644'
+      owner: root
+      group: root
+
+  - name: Configure fail2ban to use postfix
+    become: yes
+    copy:
+      remote_src: yes
+      src: /etc/fail2ban/action.d/sendmail-whois.conf
+      dest: /etc/fail2ban/action.d/postfix-whois.conf
+      mode: '0644'
+      owner: root
+      group: root
+
+  - name: Configure fail2ban to use postfix
+    become: yes
+    copy:
+      remote_src: yes
+      src: /etc/fail2ban/action.d/sendmail.conf
+      dest: /etc/fail2ban/action.d/postfix.conf
+      mode: '0644'
+      owner: root
+      group: root
+
+  - name: Copy fail2ban jail.local
+    become: yes
+    template:
+      src: jail.local.j2
+      dest: /etc/fail2ban/jail.local
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Copy wordpress filter
+    become: yes
+    template:
+      src: wordpress.conf.j2
+      dest: /etc/fail2ban/filter.d/wordpress.conf
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Copy nginx-http-auth filter
+    become: yes
+    template:
+      src: nginx-http-auth.local.j2
+      dest: /etc/fail2ban/filter.d/nginx-http-auth.local
+      owner: root
+      group: root
+      mode: '0644'

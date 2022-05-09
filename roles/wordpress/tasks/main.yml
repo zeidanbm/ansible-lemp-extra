@@ -1,0 +1,40 @@
+---
+  - include: wp-cli.yml
+
+  - name: Is WordPress already downloaded
+    stat:
+      path: "var/www/{{ item.0 }}/wp-load.php"
+    register: is_wp_downloaded
+    with_together:
+     - [ wordpress-site ]
+
+  - name: Is WordPress config already setup
+    stat:
+      path: "var/www/{{ item.0 }}/wp-config.php"
+    register: is_wp_configured
+    with_together:
+     - [ wordpress-site ]
+
+  - name: Download WordPress to domain directory via wp-cli
+    become: yes
+    become_user: "{{ item.0  }}"
+    command: wp core download
+    args:
+      chdir: 'var/www/{{ item.0 }}'
+    when: item.1.stat.exists == false
+    with_together:
+     - [ wordpress-site ]
+     - "{{ is_wp_downloaded.results }}"
+
+  - name: Setup WordPress Config
+    become: yes
+    copy:
+      src: "wp-config.php"
+      dest: "var/www/{{ item.0 }}/wp-config.php"
+      owner: "www-data"
+      group: "www-data"
+      mode: 0644
+    when: item.1.stat.exists == false
+    with_together:
+     - [ wordpress-site ]
+     - "{{ is_wp_configured.results }}"

@@ -1,0 +1,14 @@
+---
+  - stat: path=/etc/php/7.4/fpm/php.ini
+    register: phpfpm74
+
+  - stat: path=/etc/php/7.4/cli/php.ini
+    register: phpcli74
+
+  - include: php-fpm.yml
+    when:
+      - phpfpm74.stat.exists
+
+  - include: php-cli.yml
+    when:
+      - phpcli74.stat.exists

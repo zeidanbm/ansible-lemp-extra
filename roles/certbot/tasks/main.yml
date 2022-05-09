@@ -1,0 +1,23 @@
+---
+  - name: Install core
+    become: yes
+    community.general.snap:
+      classic: yes
+      name: core
+
+  - name: Update core to latest
+    become: yes
+    command: snap refresh core
+
+  - name: Install certbot
+    become: yes
+    community.general.snap:
+      classic: yes
+      name: certbot
+
+  - name: Symlink certbot
+    become: yes
+    file:
+      src: /snap/bin/certbot
+      dest: /usr/bin/certbot
+      state: link

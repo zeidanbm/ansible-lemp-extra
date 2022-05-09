@@ -1,0 +1,10 @@
+Cmnd_Alias FILE=/usr/bin/cp,/usr/bin/mv,/usr/bin/ls,/usr/bin/rm,/usr/bin/cat,/usr/bin/touch,/usr/bin/nano,/usr/bin/mkdir,/usr/bin/tail
+Cmnd_Alias DEV=/usr/bin/git,/usr/local/bin/composer,/usr/bin/npm,/usr/bin/yarn,/usr/bin/pm2
+Cmnd_Alias NETWORK=/usr/bin/netstat
+Cmnd_Alias SYSTEM=/usr/bin/apt,/usr/bin/php7.2,/usr/bin/php7.4,/usr/bin/php,/usr/bin/env,/usr/bin/chown,/usr/bin/chmod,/usr/sbin/reboot,/usr/sbin/service,/usr/sbin/cron,/usr/bin/crontab,/usr/lib/apt
+
+# User rules for admin
+{{ user.admin.username }} ALL=(ALL) PASSWD:ALL
+
+# User rules for developers
+{{ user.dev.username }} ALL=(ALL) PASSWD:SYSTEM,NETWORK,FILE,DEV

@@ -1,0 +1,12 @@
+[web]
+# add ip addresse to target
+
+[web:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_connection=ssh
+ansible_port=
+ansible_become_pass=
+ansible_user=
+;ansible_become_pass=123657
+;ansible_ssh_pass=123657
+;ansible_user=ubuntu

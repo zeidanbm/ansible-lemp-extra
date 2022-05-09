@@ -1,0 +1,35 @@
+Include /etc/ssh/sshd_config.d/*.conf
+
+Port 2298
+
+LoginGraceTime 1m
+PermitRootLogin no
+MaxAuthTries 3
+
+PubkeyAuthentication yes
+
+
+PasswordAuthentication no
+PermitEmptyPasswords no
+
+ChallengeResponseAuthentication no
+
+UsePAM yes
+
+X11Forwarding no
+PrintMotd no
+ClientAliveInterval 300
+ClientAliveCountMax 0
+MaxStartups 3
+
+Banner none
+
+AcceptEnv LANG LC_*
+
+Subsystem	sftp	internal-sftp
+
+AllowUsers {{ user.admin.username }} {{ user.dev.username }}
+
+AllowTcpForwarding no
+Match Group root
+AllowTcpForwarding yes

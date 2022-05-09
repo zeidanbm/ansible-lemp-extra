@@ -1,0 +1,41 @@
+---
+  - name: Add PPA Repository
+    become: yes
+    apt_repository:
+      repo: 'ppa:ondrej/php'
+      codename: focal
+
+  - name: Install PHP 7.4
+    become: yes
+    apt:
+      name: [ php7.4, php7.4-fpm ]
+      state: latest
+      update_cache: yes
+
+  - name: Install PHP Packages
+    become: yes
+    apt: 
+      name: "{{ php.packages }}"
+      state: latest
+      update_cache: yes
+    when: php.packages is defined
+
+  - include: configure.yml
+
+  - name: Copy templates for php7.4 fpm pool configs
+    become: yes
+    template:
+      src: "{{ item.file }}"
+      dest: "/etc/php/7.4/fpm/pool.d/{{ item.name }}"
+      owner: root
+      group: root
+      mode: 0644
+    with_items:
+      - file: wordpress.conf.j2
+        name: wordpress.conf
+      - file: phpmyadmin.conf.j2
+        name: phpmyadmin.conf
+    notify: restart php7.4-fpm
+
+  - name: Ensure php fpm is running
+    meta: flush_handlers

@@ -1,0 +1,50 @@
+include /etc/nginx/snippets/location/geo-auth.conf;
+
+server {	
+	server_name phpmyadmin.{{ wordpress.domain }};
+	root /var/www/phpmyadmin;
+	
+	client_max_body_size 100M;
+
+	location / {
+		index index.php;
+	}
+	
+	location ~ /\.ht {
+		deny all;
+	}
+	
+	location ~ /(libraries|setup/frames|setup/libs) {
+		deny all;
+		return 404;
+	}
+
+	location ~ \.php$ {
+		fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+		include /etc/nginx/fastcgi_params;
+		fastcgi_read_timeout 600;
+
+		fastcgi_pass unix:/var/run/php/php7.4-fpm-phpmyadmin.sock;
+		fastcgi_index index.php;
+		fastcgi_param SCRIPT_FILENAME /usr/share/phpmyadmin$fastcgi_script_name;
+	}
+	
+	include /etc/nginx/snippets/basic.conf;
+	include /etc/nginx/snippets/directive-only/basic-auth.conf;
+
+	error_log /var/log/nginx/phpmyadmin.error.log;
+	access_log off;
+}
+
+server {
+	if ($host = phpmyadmin.{{ wordpress.domain }}) {
+		return 301 http://$host$request_uri;
+	} # managed by Certbot
+
+
+	listen 80;
+	listen [::]:80;
+	
+	server_name {{ wordpress.domain }};
+	return 404; # managed by Certbot
+}

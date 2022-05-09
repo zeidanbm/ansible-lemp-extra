@@ -1,0 +1,128 @@
+---
+  - name: Ensure sudo group is present
+    group:
+      name: sudo
+      state: present
+
+  - name: Ensure user groups are present
+    become: yes
+    group:
+      name: "{{ item.group }}"
+      state: present
+      system: "{{ item.system }}"
+    with_items:
+      - group: "{{ user.admin.username }}"
+        system: no
+      - group: "{{ user.phpmyadmin.username }}"
+        system: yes
+  
+  - name: Ensure group "phpmyadmin" exists
+    become: yes
+    group:
+      name: "{{ user.phpmyadmin.username }}"
+      state: present
+      system: yes
+
+  - name: Create admin and dev users
+    become: yes
+    user:
+      name: "{{ item.name }}"
+      password: "{{ item.password }}"
+      shell: /bin/bash
+      group: "{{ item.name }}"
+      update_password: always
+      state: present
+    with_items:
+      - name: "{{ user.admin.username }}"
+        password: "{{ user.admin.password }}"
+      - name: "{{ user.dev.username }}"
+        password: "{{ user.dev.password }}"
+
+  - name: upload admin user ssh public key
+    become: yes
+    authorized_key:
+      user: "{{ user.admin.username }}"
+      state: present
+      key: "{{ item }}"
+    with_file:
+      - id_rsa.pub
+
+  - name: Ensure var/www site directory exists with correct permissions
+    become: yes
+    file:
+      path: /var/www
+      state: directory
+      owner: root
+      group: root
+      mode: '0755'
+
+  - name: Ensure wordpress-site site directory exists with correct permissions
+    become: yes
+    file:
+      path: "var/www/wordpress-site"
+      state: directory
+      mode: '0755'
+      owner: "www-data"
+      group: "www-data"
+
+  - name: Create other system users
+    become: yes
+    user:
+      name: "{{ item.name }}"
+      shell: /usr/sbin/nologin
+      group: "{{ item.name }}"
+      create_home: "{{ item.hasHomeDir }}"
+      home: "{{ item.home }}"
+      system: yes
+      state: present
+    with_items:
+      - name: "{{ user.phpmyadmin.username }}"
+        home: "{{ user.phpmyadmin.home }}"
+        hasHomeDir: True
+
+  - name: copy sudoers configuration
+    become: yes
+    template:
+      src: 90-cloud-users.j2
+      dest: /etc/sudoers.d/90-cloud-users
+      owner: root
+      group: root
+      mode: 440
+
+  - name: Copy .bash_profile to admin home directory
+    become: yes
+    template:
+      src: bash_profile.j2
+      dest: "{{ user.admin.home }}/.bash_profile"
+      owner: "{{ user.admin.username }}"
+      group: "{{ user.admin.username }}"
+      mode: '0644'
+    
+  - name: Source .bash_profile
+    raw: source "{{ user.admin.home }}/.bash_profile"
+ 
+  - name: Ensure www/default directory exists
+    become: yes
+    file:
+      path: /var/www/default
+      state: directory
+      owner: www-data
+      group: www-data
+      mode: '0755'
+
+  - name: copy error html page to var/www/default
+    become: yes
+    copy:
+      src: default/
+      dest: /var/www/default
+      owner: www-data
+      group: www-data
+      mode: 0644
+
+  - name: Update root password
+    become: yes
+    user:
+      name: root
+      password: "{{ user.root.password }}"
+      update_password: always
+      state: present

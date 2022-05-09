@@ -1,0 +1,22 @@
+---
+  - hosts: web
+    remote_user: admin
+    gather_facts: false
+    vars_files:
+      - vars/all.yml
+    roles:
+      - node
+      - php
+      - wordpress
+      - certbot
+      - nginx
+      - mysql
+      - phpmyadmin
+      - postfix
+      - composer
+      - clamav
+      - permissions
+      - backup
+      - iptables
+      - fail2ban
+      - reboot

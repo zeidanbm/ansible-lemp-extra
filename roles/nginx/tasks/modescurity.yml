@@ -1,0 +1,178 @@
+---
+  - name: Check if Modsecurity is installed
+    stat:
+      path: /usr/share/nginx/modules/ngx_http_modsecurity_module.so
+    register: has_modsecurity
+
+  - name: Compile and install Modsecurity for nginx
+    block:
+      - name: Clone the GitHub repository for the NGINX ModSecurity connector.
+        git:
+          repo: 'https://github.com/SpiderLabs/ModSecurity'
+          dest: /tmp/ModSecurity
+          depth: 1
+          clone: yes
+          version: v3/master
+          
+
+      - name: Create the local configuration file for the submodules
+        command: git submodule init
+        args:
+          chdir: /tmp/ModSecurity
+
+      - name: Execute submodules update
+        command: git submodule update
+        args:
+          chdir: /tmp/ModSecurity
+
+      - name: Build the source code
+        command: ./build.sh
+        args:
+          chdir: /tmp/ModSecurity
+
+      - name: Configure the source code
+        command: ./configure
+        args:
+          chdir: /tmp/ModSecurity
+
+      - name: Compile the source code
+        command: make
+        args:
+          chdir: /tmp/ModSecurity
+
+      - name: Compile the source code
+        command: make install
+        args:
+          chdir: /tmp/ModSecurity
+
+      - name: Clone the GitHub repository for the NGINX ModSecurity connector.
+        git:
+          repo: 'https://github.com/SpiderLabs/ModSecurity-nginx.git'
+          depth: 1
+          clone: yes
+          dest: /tmp/ModSecurity-nginx
+
+      - name: Download the source code corresponding to the installed version of NGINX
+        get_url: 
+          url: "http://nginx.org/download/nginx-{{ nginx.version }}.tar.gz"
+          dest: "/tmp/nginx-{{ nginx.version }}.tar.gz"
+
+      - name: Extract the downloaded nginx file
+        unarchive:
+          src: "/tmp/nginx-{{ nginx.version }}.tar.gz"
+          dest: /tmp
+          remote_src: yes
+
+      - name: Compile the dynamic module
+        command: ./configure --with-compat --add-dynamic-module=../ModSecurity-nginx
+        args:
+          chdir: "/tmp/nginx-{{ nginx.version }}"
+
+      - name: Compile the dynamic module
+        command: make modules
+        args:
+          chdir: "/tmp/nginx-{{ nginx.version }}"
+      
+      - name: Copy modsecurity module to the standard directory for nginx modules
+        copy:
+          src: "/tmp/nginx-{{ nginx.version }}/objs/ngx_http_modsecurity_module.so"
+          dest: /usr/share/nginx/modules/ngx_http_modsecurity_module.so
+          mode: '0644'
+          owner: root
+          group: root
+          remote_src: yes
+    when: has_modsecurity.stat.exists == false
+    become: yes
+    always:
+      - name: Clean tmp directory
+        become: yes
+        file: 
+          name: "/tmp/{{ item }}"
+          state: absent
+        with_items:
+          - "nginx-{{ nginx.version }}.tar.gz"
+          - ModSecurity-nginx
+          - "nginx-{{ nginx.version }}"
+
+  
+  - name: create modsec directory
+    become: yes
+    file:
+      path: /etc/nginx/modsec
+      state: directory
+      mode: '0755'
+      owner: root
+      group: root
+
+  - name: Download modsecurity recommended configuration
+    become: yes
+    get_url:
+      url: https://raw.githubusercontent.com/SpiderLabs/ModSecurity/v3/master/modsecurity.conf-recommended
+      dest: /etc/nginx/modsec/
+
+  - name: rename modsec configuration
+    become: yes
+    copy:
+      src: /etc/nginx/modsec/modsecurity.conf-recommended
+      dest: /etc/nginx/modsec/modsecurity.conf
+      mode: '0644'
+      owner: root
+      group: root
+      remote_src: yes
+
+  - name: remove old modsec configuration
+    become: yes
+    file:
+      path: /etc/nginx/modsec/modsecurity.conf-recommended
+      state: absent
+  
+  - name: copy modsec unicode mapping
+    become: yes
+    copy:
+      src: /tmp/ModSecurity/unicode.mapping
+      dest: /etc/nginx/modsec/unicode.mapping
+      mode: '0644'
+      owner: root
+      group: root
+      remote_src: yes
+
+  - name: Set SecRuleEngine On
+    become: yes
+    lineinfile:
+      dest: /etc/nginx/modsec/modsecurity.conf
+      regexp: "^SecRuleEngine"
+      line: "SecRuleEngine On"
+      state: present
+
+  - name: Download the owasp modsec rules
+    become: yes
+    get_url:
+      url: "https://github.com/SpiderLabs/owasp-modsecurity-crs/archive/v{{ nginx.owasp_version }}.tar.gz"
+      dest: "/tmp/v{{ nginx.owasp_version }}.tar.gz"
+
+  - name: Extract the downloaded owas modsec rules file
+    become: yes
+    unarchive:
+      src: "/tmp/v{{ nginx.owasp_version }}.tar.gz"
+      dest: /usr/local
+      remote_src: yes
+  
+  - name: copy crs-setup configuration
+    become: yes
+    copy:
+      src: "/usr/local/owasp-modsecurity-crs-{{ nginx.owasp_version }}/crs-setup.conf.example"
+      dest: "/usr/local/owasp-modsecurity-crs-{{ nginx.owasp_version }}/crs-setup.conf"
+      mode: 0644
+      owner: root
+      group: root
+      remote_src: yes
+
+  - name: Add main.conf
+    become: yes
+    copy:
+      src: main.conf
+      dest: /etc/nginx/modsec/main.conf
+      owner: root
+      group: root
+      mode: 0644
+    notify: (Handler - NGINX Config) Run NGINX

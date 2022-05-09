@@ -1,0 +1,9 @@
+---
+  - name: copy backup script
+    become: yes
+    copy:
+      src: backup.sh
+      dest: /usr/local/sbin
+      mode: +x
+      owner: root
+      group: root

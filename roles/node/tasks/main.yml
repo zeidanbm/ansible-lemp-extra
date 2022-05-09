@@ -1,0 +1,70 @@
+---
+  - name: Install Node js
+    block: 
+      - name: Add Node source package
+        become: yes
+        uri:
+          url: https://deb.nodesource.com/setup_16.x
+          dest: /tmp/nodesource_setup.sh
+          mode: +x
+          owner: root
+          group: root
+
+      - name: Update Source Package
+        become: yes
+        command: /bin/bash /tmp/nodesource_setup.sh
+
+      - name: Install Node
+        become: yes
+        apt:
+          name: nodejs
+          state: present
+          update_cache: yes
+    rescue:
+      - name: Remove nodesource
+        file:
+          path: /etc/apt/sources.list.d/nodesource.list
+          state: absent
+    always:
+      - name: Remove node source script
+        file:
+          path: /tmp/setup_16.sh
+          state: absent
+
+  - name: Ensure we have a directory for global npm packages for user dev
+    become: yes
+    file:
+      path: "{{ user.admin.home }}/.npm-packages"
+      state: directory
+      owner: "{{ user.admin.username }}"
+      group: "{{ user.admin.username }}"
+      mode: '0755'
+
+  - name: Ensure we have a directory for global npm packages for user dev
+    become: yes
+    file:
+      path: "{{ user.admin.home }}/.npm-packages"
+      state: directory
+      owner: "{{ user.admin.username }}"
+      group: "{{ user.admin.username }}"
+      mode: '0755'
+
+  - name: Tell npm where to store globally installed npm packages
+    become: yes
+    become_user: "{{ user.admin.username }}"
+    raw: npm config set prefix "{{ user.admin.home }}/.npm-packages"
+
+  - name: Install pm2 package
+    become: yes
+    become_user: "{{ user.admin.username }}"
+    community.general.npm:
+      name: pm2
+      global: yes
+      version: 'latest'
+
+  - name: Update npm to latest
+    become: yes
+    become_user: "{{ user.admin.username }}"
+    community.general.npm:
+      name: yarn
+      global: yes

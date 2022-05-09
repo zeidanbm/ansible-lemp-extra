@@ -1,0 +1,58 @@
+---
+  - name: mysql | Install MySQL Packages
+    become: yes
+    apt:
+      name: [ mysql-server, mysql-client, python3-mysqldb ] 
+      state: latest
+      update_cache: yes
+
+  - name: mysql | Update root password
+    become: yes
+    community.mysql.mysql_user:
+      name: root
+      host: localhost
+      check_implicit_admin: yes
+      password: "{{ mysql.root_password }}"
+      login_user: root
+      login_password: "{{ mysql.root_password }}"
+
+  - name: mysql | Removes all anonymous user accounts
+    become: yes
+    community.mysql.mysql_user:
+      name: ''
+      host_all: yes
+      state: absent
+      login_user: root
+      login_password: "{{ mysql.root_password }}"
+
+  - name: mysql | Create user admin_user
+    become: yes
+    community.mysql.mysql_user:
+      name: "{{ mysql.admin_user }}"
+      password: "{{ mysql.admin_password }}"
+      priv: '*.*:ALL,GRANT'
+      state: present
+      login_user: root
+      login_password: "{{ mysql.root_password }}"
+  
+  - name: mysql | Create user wordpress_db_user
+    become: yes
+    community.mysql.mysql_user:
+      name: "{{ mysql.wordpress_db_user }}"
+      password: "{{ mysql.wordpress_db_password }}"
+      priv: '{{ mysql.wordpress_db }}.*:ALL'
+      state: present
+      login_user: root
+      login_password: "{{ mysql.root_password }}"
+    
+  - name: Add mysqlx=OFF to logrotate
+    become: yes
+    blockinfile:
+      path: /etc/logrotate.d/nginx
+      insertafter: EOF
+      state: present
+      owner: root
+      mode: 0600
+      block: |
+        [mysqld]
+        mysqlx=OFF

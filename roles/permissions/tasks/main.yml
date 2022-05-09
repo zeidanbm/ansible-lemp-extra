@@ -1,0 +1,13 @@
+---
+  - name: copy permissions script
+    become: yes
+    copy:
+      src: perms.sh
+      dest: /usr/local/sbin
+      mode: +x
+      owner: root
+      group: root
+
+  # - name: Execute the script
+  #   become: yes
+  #   command: /bin/bash /usr/local/sbin/perms.sh

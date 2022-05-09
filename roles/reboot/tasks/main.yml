@@ -1,0 +1,7 @@
+---
+  - name: Notify for reboot
+    command: echo "This task will restart the machine"
+    notify: Reboot host and wait for restart
+
+  - name: Reboot if necessary
+    meta: flush_handlers
